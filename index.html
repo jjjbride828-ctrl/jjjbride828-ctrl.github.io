@@ -148,7 +148,7 @@
   }
 
   footer {
-    padding: 50px 6%;
+    padding: 60px 6% 50px;
     text-align: center;
     border-top: 1px solid var(--line);
     color: var(--sub);
@@ -157,7 +157,51 @@
   footer .brand {
     color: var(--ink);
     font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 30px;
+  }
+  .contact-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 36px;
+    max-width: 640px;
+    margin: 0 auto 36px;
+    list-style: none;
+    padding: 0;
+    text-align: left;
+  }
+  .contact-list li {
+    min-width: 180px;
+  }
+  .contact-label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
     margin-bottom: 8px;
+  }
+  .contact-list a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .contact-list a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  .contact-sub {
+    display: block;
+    color: var(--sub);
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+  .copyright {
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
   }
 </style>
 </head>
@@ -214,9 +258,27 @@
 </section>
 
 <footer id="contact">
-  <div class="brand">시그니처진주</div>
-  <p>문의: 010-6560-3280 (업무 중에는 전화 연결이 어려우니 문자로 남겨주세요)</p>
-  <p>&copy; 2026 시그니처진주. All rights reserved.</p>
+  <div class="brand">Business Contact</div>
+  <ul class="contact-list">
+    <li>
+      <span class="contact-label">Email</span>
+      <a href="mailto:lifehj0103@naver.com">lifehj0103@naver.com</a>
+    </li>
+    <li>
+      <span class="contact-label">Naver Blog</span>
+      <a href="https://m.blog.naver.com/signaturejinju" target="_blank" rel="noopener noreferrer">
+        시그니처 진주 The only one
+        <span class="contact-sub">m.blog.naver.com/signaturejinju</span>
+      </a>
+    </li>
+    <li>
+      <span class="contact-label">Instagram</span>
+      <a href="https://www.instagram.com/jinju0103" target="_blank" rel="noopener noreferrer">
+        @jinju0103
+      </a>
+    </li>
+  </ul>
+  <p class="copyright">&copy; 2026 시그니처진주. All rights reserved.</p>
 </footer>
 
 </body>
