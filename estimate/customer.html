@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인테리어 간편 견적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top"><div><b id="coTitle">인테리어 간편 견적</b><br><small>건물과 평수만 넣으면 예상 금액을 알려드려요</small></div></div>
+<div class="wrap">
+  <div id="demoAlert" class="alert warn hide">예시 화면입니다. 실제 업체 단가가 아닌 예시 금액으로 계산됩니다.</div>
+  <div id="stopAlert" class="alert err hide">현재 이용할 수 없는 견적 링크입니다. 업체에 직접 문의해 주세요.</div>
+
+  <div id="app">
+  <div class="card">
+    <h2>1. 어떤 건물인가요?</h2>
+    <div class="chips" id="types"></div>
+  </div>
+  <div class="card">
+    <h2>2. 평수를 알려주세요</h2>
+    <div class="row">
+      <div><label>평수</label><input id="py" type="number" inputmode="decimal" min="1" placeholder="예: 32"></div>
+      <div><label>욕실 개수</label><input id="bath" type="number" inputmode="numeric" min="0" value="2"></div>
+    </div>
+    <p class="note" id="m2"></p>
+  </div>
+  <div class="card">
+    <h2>3. 공사 범위</h2>
+    <div class="chips" style="margin-bottom:10px">
+      <label class="chip"><input type="radio" name="scope" value="full" checked><span>전체 리모델링</span></label>
+      <label class="chip"><input type="radio" name="scope" value="part"><span>일부만 선택</span></label>
+    </div>
+    <div class="items" id="items"></div>
+  </div>
+
+  <div class="card" id="result" style="border:2px solid var(--navy)">
+    <h2>예상 견적</h2>
+    <div id="resBox"><p class="note">평수를 입력하면 바로 계산됩니다.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>정확한 견적 상담 신청</h2>
+    <div class="row">
+      <div><label>이름</label><input id="c_name"></div>
+      <div><label>연락처</label><input id="c_phone" inputmode="tel"></div>
+    </div>
+    <label>현장 지역</label><input id="c_area" placeholder="예: 대구 수성구">
+    <label>희망 공사 시기·요청사항</label><textarea id="c_memo" rows="3"></textarea>
+    <div class="btns">
+      <button class="btn block" id="sms">문자로 상담 신청</button>
+      <a class="btn line block" id="call">전화 걸기</a>
+    </div>
+    <p class="note">문자 앱이 열리면 내용을 확인하고 보내기를 눌러 주세요. 입력하신 정보는 이 페이지에 저장되지 않고 업체에 보내는 문자에만 들어갑니다.</p>
+  </div>
+  <p class="note" style="text-align:center">본 금액은 자동 계산된 참고용 예상가이며, 현장 실측과 자재 선택에 따라 달라질 수 있습니다.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let CFG = null, CO = { n: "예시 인테리어", p: "", c: "" }, RANGE = 10, TYPES = IE.DEFAULT_TYPES, ITEMS = IE.DEFAULT_ITEMS.map(i => Object.assign({}, i, { price: IE.round(i.price * 1.15, 100) }));
+
+async function init() {
+  const m = (location.hash.match(/c=([\w-]+)/) || [])[1];
+  if (m) {
+    try { CFG = IE.decodeObj(m); } catch { CFG = null; }
+    if (!CFG) return stop();
+    const lic = await IE.verifyLicense(CFG.l);
+    if (!lic.ok) return stop();
+    CO = { n: lic.data.n, p: CFG.co.p, c: CFG.co.c }; RANGE = CFG.r || 10;
+    TYPES = CFG.t.map(([id, name, k]) => ({ id, name, k }));
+    ITEMS = CFG.i.map(([id, name, unit, price, per, def]) => ({ id, name, unit, price, per, def: !!def }));
+  } else $("#demoAlert").classList.remove("hide");
+  document.title = CO.n + " 간편 견적";
+  $("#coTitle").textContent = CO.n + " 간편 견적";
+  $("#types").innerHTML = TYPES.map((t, i) => `<label class="chip"><input type="radio" name="t" value="${t.id}" ${i ? "" : "checked"}><span>${IE.esc(t.name)}</span></label>`).join("");
+  $("#items").innerHTML = ITEMS.map(i => `<label class="item"><input type="checkbox" value="${i.id}" ${i.def ? "checked" : ""}><span class="nm">${IE.esc(i.name)}</span></label>`).join("");
+  $("#items").classList.add("hide");
+  if (CO.p) $("#call").href = "tel:" + CO.p.replace(/[^\d+]/g, ""); else $("#call").classList.add("hide");
+  calc();
+}
+function stop() { $("#app").classList.add("hide"); $("#stopAlert").classList.remove("hide"); }
+
+let LAST = null;
+function calc() {
+  const py = +$("#py").value || 0, bath = +$("#bath").value || 0;
+  $("#m2").textContent = py ? "약 " + (py * IE.PY).toFixed(1) + "㎡" : "";
+  const full = $("input[name=scope]:checked").value === "full";
+  $("#items").classList.toggle("hide", full);
+  const t = TYPES.find(x => x.id === $("input[name=t]:checked").value);
+  const sel = full ? ITEMS.filter(i => i.def) : ITEMS.filter(i => $(`#items input[value="${i.id}"]`).checked);
+  if (!py) { $("#resBox").innerHTML = '<p class="note">평수를 입력하면 바로 계산됩니다.</p>'; LAST = null; return; }
+  const lines = sel.map(i => ({ name: i.name, amt: i.price * t.k * IE.qtyOf(i, py, bath) })).filter(l => l.amt > 0);
+  const sum = lines.reduce((a, l) => a + l.amt, 0);
+  const lo = IE.round(sum * (1 - RANGE / 100), 100000), hi = IE.round(sum * (1 + RANGE / 100), 100000);
+  LAST = { t: t.name, py, bath, lo, hi, scope: full ? "전체 리모델링" : sel.map(i => i.name).join(", ") };
+  $("#resBox").innerHTML = sum ? `<p>${IE.esc(t.name)} ${py}평 · ${full ? "전체 리모델링" : "선택 공사"}</p>
+    <p class="big">${IE.man(lo)} ~ ${IE.man(hi)}</p><p class="note" style="margin-bottom:10px">부가세 별도 · 참고용 예상 금액</p>
+    ${lines.map(l => `<div class="kv"><span>${IE.esc(l.name)}</span><span>약 ${IE.man(l.amt)}</span></div>`).join("")}`
+    : '<p class="note">공사 항목을 하나 이상 선택해 주세요.</p>';
+}
+document.addEventListener("input", calc); document.addEventListener("change", calc);
+
+$("#sms").onclick = () => {
+  const name = $("#c_name").value.trim(), phone = $("#c_phone").value.trim();
+  if (!name || !phone) return toast("이름과 연락처를 입력해 주세요.");
+  if (!CO.p) return toast("예시 화면에서는 문자를 보낼 수 없습니다.");
+  const body = `[간편견적 상담신청]\n이름: ${name}\n연락처: ${phone}\n지역: ${$("#c_area").value}\n` +
+    (LAST ? `건물: ${LAST.t} ${LAST.py}평, 욕실 ${LAST.bath}개\n범위: ${LAST.scope}\n예상가: ${IE.man(LAST.lo)}~${IE.man(LAST.hi)}\n` : "") +
+    `요청: ${$("#c_memo").value}`;
+  location.href = "sms:" + CO.p.replace(/[^\d+]/g, "") + "?body=" + encodeURIComponent(body);
+};
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2000); }
+init();
+</script>
+</body>
+</html>
