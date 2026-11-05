@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인테리어 견적 앱 | 건물과 평수만 넣으면 견적서 완성</title>
+<meta name="description" content="인테리어 대표님을 위한 월 구독 견적서 앱. 건물 유형과 평수만 넣으면 견적서가 만들어지고, 고객용 간편견적 링크로 상담 문의까지 받을 수 있습니다.">
+<link rel="stylesheet" href="style.css">
+<style>
+.hero{background:var(--navy);color:#fff;padding:56px 20px 48px;text-align:center}
+.hero h1{font-size:clamp(1.6rem,6vw,2.4rem);line-height:1.35;margin-bottom:14px}
+.hero p{opacity:.9;max-width:520px;margin:0 auto 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.price{font-size:2rem;font-weight:800;color:var(--navy)}
+ol.step{padding-left:20px}ol.step li{margin:6px 0}
+</style>
+</head>
+<body>
+<section class="hero">
+  <h1>건물과 평수만 넣으면<br>견적서가 바로 나옵니다</h1>
+  <p>인테리어 대표님을 위한 월 구독 견적 앱. 현장에서 휴대폰으로 견적서를 만들고, 고객에게는 간편견적 링크로 상담 문의를 받으세요.</p>
+  <div class="btns" style="justify-content:center">
+    <a class="btn gold" href="owner.html">대표용 앱 열기 (무료 체험)</a>
+    <a class="btn line" href="customer.html" style="background:#fff">고객용 화면 예시</a>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="grid">
+    <div class="card"><h2>대표용 앱</h2>
+      <p>건물 유형, 평수, 욕실 수, 공사 항목을 고르면 공종별 단가와 금액이 자동 계산됩니다. 원가, 이윤, 이익률은 대표님 화면에만 보이고 견적서에는 나오지 않습니다. PDF 저장과 인쇄, 견적 저장과 백업을 지원합니다.</p></div>
+    <div class="card"><h2>고객용 간편견적</h2>
+      <p>고객은 건물과 평수만 넣으면 예상 금액 범위를 확인하고, 버튼 한 번으로 대표님께 상담 문자를 보냅니다. 블로그, 인스타그램, 카카오톡 채널에 링크를 걸어 문의 창구로 쓸 수 있습니다.</p></div>
+    <div class="card"><h2>내 단가 그대로</h2>
+      <p>공종별 원가 단가와 건물 유형별 난이도 계수를 대표님 기준으로 설정합니다. 처음 들어 있는 숫자는 예시이므로 실제 단가로 바꿔서 사용하세요.</p></div>
+  </div>
+
+  <div class="card" id="plan">
+    <h2>요금</h2>
+    <p class="price">월 29,000원</p>
+    <p class="note" style="margin-bottom:12px">1개월 단위 구독 · 구독 전에도 체험판으로 모든 화면을 써 볼 수 있습니다 (견적서에 '체험판' 표시, 저장과 고객용 링크 제한)</p>
+    <div class="kv"><span>대표용 견적서 작성·PDF 저장</span><b>포함</b></div>
+    <div class="kv"><span>견적서 상호 표시</span><b>포함</b></div>
+    <div class="kv"><span>견적 저장·백업</span><b>포함</b></div>
+    <div class="kv"><span>고객용 간편견적 링크</span><b>포함</b></div>
+  </div>
+
+  <div class="card">
+    <h2>구독 신청 방법</h2>
+    <ol class="step">
+      <li>아래 이메일로 업체명과 연락처를 보내 주세요.</li>
+      <li>결제 방법을 안내받고 결제합니다.</li>
+      <li>결제가 확인되면 1개월 구독코드를 보내 드립니다.</li>
+      <li>대표용 앱의 '구독' 탭에 코드를 붙여넣으면 바로 사용할 수 있습니다.</li>
+    </ol>
+    <div class="btns"><a class="btn" href="mailto:lifehj0103@naver.com?subject=%5B%EC%9D%B8%ED%85%8C%EB%A6%AC%EC%96%B4%20%EA%B2%AC%EC%A0%81%20%EC%95%B1%5D%20%EA%B5%AC%EB%8F%85%20%EC%8B%A0%EC%B2%AD&body=%EC%97%85%EC%B2%B4%EB%AA%85%3A%0A%EB%8C%80%ED%91%9C%EC%9E%90%3A%0A%EC%97%B0%EB%9D%BD%EC%B2%98%3A%0A">이메일로 구독 신청</a></div>
+    <p class="note">견적과 데이터는 대표님 휴대폰(브라우저)에 저장되며 서버로 전송되지 않습니다. 기기를 바꾸거나 브라우저 기록을 지우기 전에는 '저장 목록'에서 백업 파일을 받아 두세요.</p>
+  </div>
+  <p class="note" style="text-align:center">운영 시그니처진주</p>
+</div>
+</body>
+</html>

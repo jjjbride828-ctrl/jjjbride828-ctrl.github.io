@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>대표용 견적 관리 | 인테리어 견적 앱</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top"><div><b>대표용 견적 관리</b><br><small id="coName">체험판</small></div><span class="badge" id="licBadge">확인 중</span></div>
+<div class="tabs">
+  <button data-t="quote" class="on">견적 작성</button>
+  <button data-t="list">저장 목록</button>
+  <button data-t="rates">단가 설정</button>
+  <button data-t="link">고객용 링크</button>
+  <button data-t="sub">구독</button>
+</div>
+
+<div class="wrap">
+<div id="trialAlert" class="alert warn hide">체험판으로 이용 중입니다. 견적서에 '체험판' 표시가 들어가고 고객용 링크는 만들 수 없습니다. <a href="#" data-go="sub">구독코드 입력하기</a></div>
+
+<!-- 견적 작성 -->
+<section class="pane on" id="p-quote">
+  <div class="card">
+    <h2>1. 고객·현장 정보</h2>
+    <div class="row">
+      <div><label>고객명</label><input id="q_client" placeholder="홍길동"></div>
+      <div><label>연락처</label><input id="q_phone" inputmode="tel" placeholder="010-0000-0000"></div>
+    </div>
+    <label>현장 주소</label><input id="q_addr" placeholder="현장 주소">
+  </div>
+  <div class="card">
+    <h2>2. 건물·평수</h2>
+    <label>건물 유형</label><div class="chips" id="q_types"></div>
+    <div class="row3">
+      <div><label>평수</label><input id="q_py" type="number" inputmode="decimal" min="1" value="32"></div>
+      <div><label>욕실 개수</label><input id="q_bath" type="number" inputmode="numeric" min="0" value="2"></div>
+      <div><label>면적(㎡ 환산)</label><input id="q_m2" disabled></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>3. 공사 항목</h2>
+    <div class="items" id="q_items"></div>
+    <h3>추가 항목 (직접 입력)</h3>
+    <div id="q_extra"></div>
+    <button class="btn line sm" id="addExtra">+ 항목 추가</button>
+  </div>
+  <div class="card">
+    <h2>4. 금액 조건</h2>
+    <div class="row3">
+      <div><label>이윤율(%)</label><input id="q_margin" type="number" inputmode="decimal" value="15"></div>
+      <div><label>할인(원)</label><input id="q_disc" type="number" inputmode="numeric" value="0"></div>
+      <div><label>부가세</label><select id="q_vat"><option value="sep">별도 표기</option><option value="inc">포함하여 합계</option><option value="none">표기 안 함</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>견적 유효기간(일)</label><input id="q_valid" type="number" value="30"></div>
+      <div><label>예상 공사기간</label><input id="q_period" placeholder="예: 약 4주"></div>
+    </div>
+    <label>비고 (견적서 하단에 표시)</label>
+    <textarea id="q_memo" rows="3"></textarea>
+  </div>
+
+  <div class="card" style="border-color:var(--gold)">
+    <h2>대표님만 보는 내부 정보</h2>
+    <div class="kv"><span>원가 합계</span><b id="in_cost">-</b></div>
+    <div class="kv"><span>이윤 금액</span><b id="in_profit">-</b></div>
+    <div class="kv"><span>할인 반영 후 공급가</span><b id="in_supply">-</b></div>
+    <div class="kv"><span>할인 반영 후 이익률</span><b id="in_rate">-</b></div>
+    <p class="note">이 영역은 출력되는 견적서에 나오지 않습니다.</p>
+  </div>
+
+  <div class="card">
+    <h2>견적서 미리보기</h2>
+    <div id="sheet"></div>
+    <div class="btns">
+      <button class="btn" id="saveQ">저장</button>
+      <button class="btn gold" id="printQ">PDF 저장·인쇄</button>
+      <button class="btn line" id="newQ">새 견적</button>
+    </div>
+    <p class="note">휴대폰에서는 'PDF 저장·인쇄'를 누른 뒤 프린터 선택에서 'PDF로 저장'을 고르면 파일로 받을 수 있습니다. 화면 이름은 기기마다 조금 다를 수 있어요.</p>
+  </div>
+</section>
+
+<!-- 저장 목록 -->
+<section class="pane" id="p-list">
+  <div class="card"><h2>저장된 견적</h2><div id="listBox"></div>
+  <p class="note">견적은 이 휴대폰(브라우저)에만 저장됩니다. 다른 기기로 옮기려면 아래 백업 기능을 사용하세요.</p>
+  <div class="btns"><button class="btn line sm" id="backup">백업 파일 받기</button><label class="btn line sm" style="margin:0;color:var(--navy)">백업 불러오기<input type="file" id="restore" accept=".json" class="hide"></label></div>
+  </div>
+</section>
+
+<!-- 단가 설정 -->
+<section class="pane" id="p-rates">
+  <div class="card">
+    <h2>업체 정보 (견적서에 표시)</h2>
+    <label>상호 (구독코드에 등록된 이름이 자동 사용됩니다)</label><input id="s_name" disabled>
+    <div class="row">
+      <div><label>대표자</label><input id="s_ceo"></div>
+      <div><label>연락처</label><input id="s_phone" inputmode="tel"></div>
+    </div>
+    <div class="row">
+      <div><label>사업자등록번호</label><input id="s_biz"></div>
+      <div><label>입금 계좌 (선택)</label><input id="s_bank"></div>
+    </div>
+    <label>주소</label><input id="s_addr">
+    <label>견적서 기본 안내문</label>
+    <textarea id="s_terms" rows="4"></textarea>
+  </div>
+  <div class="card">
+    <h2>공종별 원가 단가</h2>
+    <p class="note" style="margin:0 0 10px">처음 들어 있는 숫자는 화면 예시용입니다. 실제 시세가 아니니 꼭 대표님 원가로 바꿔 주세요. 단위가 '평'이면 평당, '식'·'개'면 1식·1개당 금액입니다.</p>
+    <div style="overflow-x:auto"><table class="rates"><thead><tr><th>공종</th><th>단위</th><th>원가 단가(원)</th><th>기본선택</th></tr></thead><tbody id="rateRows"></tbody></table></div>
+    <h3>건물 유형별 난이도 계수</h3>
+    <p class="note" style="margin:0 0 8px">1.00이 기준입니다. 1.10이면 모든 공종 단가가 10% 올라갑니다.</p>
+    <div style="overflow-x:auto"><table class="rates"><thead><tr><th>건물 유형</th><th>계수</th></tr></thead><tbody id="typeRows"></tbody></table></div>
+    <div class="btns"><button class="btn" id="saveRates">설정 저장</button><button class="btn red sm" id="resetRates">예시값으로 초기화</button></div>
+  </div>
+</section>
+
+<!-- 고객용 링크 -->
+<section class="pane" id="p-link">
+  <div class="card">
+    <h2>고객용 간편견적 링크</h2>
+    <p>고객이 건물 유형과 평수만 넣으면 예상 금액 범위를 보고 대표님께 상담 문자를 보낼 수 있는 링크입니다.</p>
+    <div class="row">
+      <div><label>표시 범위 (±%)</label><input id="l_range" type="number" value="10"></div>
+      <div><label>적용 이윤율(%)</label><input id="l_margin" type="number" value="15"></div>
+    </div>
+    <p class="note">고객 화면에는 원가가 아니라 이윤이 반영된 금액만 들어갑니다. 구독이 끝나면 이 링크도 자동으로 멈춥니다.</p>
+    <div class="btns"><button class="btn" id="makeLink">링크 만들기</button></div>
+    <div id="linkOut" class="hide">
+      <label>고객용 링크</label><textarea id="l_url" rows="4" readonly></textarea>
+      <div class="btns"><button class="btn gold" id="copyLink">복사</button><button class="btn line" id="shareLink">공유하기</button><a class="btn line" id="openLink" target="_blank">미리보기</a></div>
+      <p class="note">단가를 바꾸면 링크를 다시 만들어 주세요. 블로그, 인스타그램 프로필, 카카오톡 채널에 붙여 쓸 수 있습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 구독 -->
+<section class="pane" id="p-sub">
+  <div class="card">
+    <h2>구독 상태</h2>
+    <div id="subStatus"></div>
+    <label>구독코드</label>
+    <textarea id="licInput" rows="3" placeholder="받으신 구독코드를 붙여넣어 주세요"></textarea>
+    <div class="btns"><button class="btn" id="licApply">등록</button><button class="btn red sm" id="licRemove">코드 삭제</button></div>
+  </div>
+  <div class="card">
+    <h2>구독 안내</h2>
+    <p>월 구독으로 이용합니다. 결제가 확인되면 1개월 구독코드를 보내 드립니다. 연장할 때도 새 코드를 받아 같은 곳에 붙여넣으면 됩니다.</p>
+    <div class="btns"><a class="btn gold" href="index.html#plan">요금·신청 방법 보기</a></div>
+  </div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2000); };
+
+const DEF_SETTINGS = {
+  ceo: "", phone: "", biz: "", bank: "", addr: "",
+  terms: "1. 본 견적은 현장 실측 전 금액으로, 실측 후 변경될 수 있습니다.\n2. 자재 선택(브랜드·등급)에 따라 금액이 달라질 수 있습니다.\n3. 확장, 구조 변경, 관리사무소 요구 공사 등은 별도 협의합니다.",
+  items: IE.clone(IE.DEFAULT_ITEMS), types: IE.clone(IE.DEFAULT_TYPES)
+};
+let S = Object.assign(IE.clone(DEF_SETTINGS), IE.load("ie_settings", {}));
+let LIC = { ok: false };
+let Q = newQuote();
+
+function newQuote() {
+  return { id: Date.now(), date: new Date().toISOString().slice(0, 10), client: "", phone: "", addr: "", type: S.types[0].id, py: 32, bath: 2,
+    sel: S.items.filter(i => i.def).map(i => i.id), extra: [], margin: 15, disc: 0, vat: "sep", valid: 30, period: "", memo: "" };
+}
+
+/* 탭 */
+function go(t) { $$(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === t)); $$(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + t)); window.scrollTo(0, 0); if (t === "list") drawList(); }
+$$(".tabs button").forEach(b => b.onclick = () => go(b.dataset.t));
+document.addEventListener("click", e => { const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); go(g.dataset.go); } });
+
+/* 구독 */
+async function checkLicense() {
+  const code = localStorage.getItem("ie_license");
+  LIC = code ? await IE.verifyLicense(code) : { ok: false, reason: "등록된 구독코드가 없습니다." };
+  const b = $("#licBadge");
+  if (LIC.ok) { b.className = "badge ok"; b.textContent = "구독 중 · " + LIC.left + "일 남음"; $("#coName").textContent = LIC.data.n; }
+  else { b.className = "badge warn"; b.textContent = LIC.expired ? "구독 만료" : "체험판"; $("#coName").textContent = LIC.expired ? LIC.data.n + " (만료)" : "체험판"; }
+  $("#trialAlert").classList.toggle("hide", LIC.ok);
+  $("#s_name").value = LIC.ok ? LIC.data.n : "(구독 후 표시)";
+  $("#subStatus").innerHTML = LIC.ok
+    ? `<div class="alert ok">${IE.esc(LIC.data.n)} · ${IE.esc(LIC.data.e)}까지 이용 가능 (${LIC.left}일 남음)${LIC.left <= 5 ? "<br>곧 만료됩니다. 연장 코드를 미리 받아 두세요." : ""}</div>`
+    : `<div class="alert warn">${IE.esc(LIC.reason)}</div>`;
+  if (code) $("#licInput").value = code;
+  render();
+}
+$("#licApply").onclick = async () => {
+  const code = $("#licInput").value.trim();
+  const r = await IE.verifyLicense(code);
+  if (!r.ok) return toast(r.reason);
+  localStorage.setItem("ie_license", code.replace(/\s+/g, "")); toast("구독코드가 등록되었습니다."); checkLicense();
+};
+$("#licRemove").onclick = () => { if (confirm("이 기기에서 구독코드를 지울까요?")) { localStorage.removeItem("ie_license"); $("#licInput").value = ""; checkLicense(); } };
+
+/* 견적 입력 */
+function drawForm() {
+  $("#q_types").innerHTML = S.types.map(t => `<label class="chip"><input type="radio" name="qt" value="${t.id}" ${Q.type === t.id ? "checked" : ""}><span>${IE.esc(t.name)}</span></label>`).join("");
+  $("#q_items").innerHTML = S.items.map(i => `<label class="item"><input type="checkbox" value="${i.id}" ${Q.sel.includes(i.id) ? "checked" : ""}><span class="nm">${IE.esc(i.name)}<small>${IE.esc(i.desc || "")}</small></span><span class="pr">${IE.won(i.price)}/${IE.unitLabel(i)}</span></label>`).join("");
+  ["client", "phone", "addr", "py", "bath", "margin", "disc", "vat", "valid", "period", "memo"].forEach(k => $("#q_" + k).value = Q[k]);
+  drawExtra();
+}
+function drawExtra() {
+  $("#q_extra").innerHTML = Q.extra.map((x, i) => `<div class="row3" style="grid-template-columns:2fr 1fr 1.4fr auto;align-items:end;margin-bottom:6px" data-i="${i}">
+    <div><input data-k="name" placeholder="항목명" value="${IE.esc(x.name)}"></div>
+    <div><input data-k="qty" type="number" placeholder="수량" value="${x.qty}"></div>
+    <div><input data-k="price" type="number" placeholder="원가 단가" value="${x.price}"></div>
+    <button class="btn red sm" data-del="${i}">삭제</button></div>`).join("");
+}
+$("#addExtra").onclick = () => { Q.extra.push({ name: "", qty: 1, price: 0 }); drawExtra(); };
+$("#q_extra").addEventListener("input", e => { const r = e.target.closest("[data-i]"); if (!r) return; const x = Q.extra[r.dataset.i]; const k = e.target.dataset.k; x[k] = k === "name" ? e.target.value : +e.target.value || 0; render(); });
+$("#q_extra").addEventListener("click", e => { if (e.target.dataset.del != null) { Q.extra.splice(+e.target.dataset.del, 1); drawExtra(); render(); } });
+document.querySelector("#p-quote").addEventListener("input", e => {
+  const id = e.target.id;
+  if (e.target.name === "qt") Q.type = e.target.value;
+  else if (e.target.closest("#q_items")) Q.sel = $$("#q_items input:checked").map(x => x.value);
+  else if (id && id.startsWith("q_")) { const k = id.slice(2); Q[k] = ["client", "phone", "addr", "vat", "period", "memo"].includes(k) ? e.target.value : +e.target.value || 0; }
+  render();
+});
+
+/* 계산 */
+function calc() {
+  const t = S.types.find(x => x.id === Q.type) || S.types[0];
+  const m = 1 + (Q.margin || 0) / 100;
+  const lines = [];
+  S.items.filter(i => Q.sel.includes(i.id)).forEach(i => {
+    const qty = IE.qtyOf(i, Q.py, Q.bath); if (!qty) return;
+    const cost = i.price * t.k * qty;
+    const unit = IE.round(i.price * t.k * m, 100);
+    lines.push({ name: i.name, desc: i.desc, qty, ul: IE.unitLabel(i), unit, amt: unit * qty, cost });
+  });
+  Q.extra.filter(x => x.name && x.qty).forEach(x => {
+    const unit = IE.round(x.price * m, 100);
+    lines.push({ name: x.name, desc: "", qty: x.qty, ul: "식", unit, amt: unit * x.qty, cost: x.price * x.qty });
+  });
+  const cost = lines.reduce((a, l) => a + l.cost, 0);
+  const gross = IE.round(lines.reduce((a, l) => a + l.amt, 0));
+  const supply = Math.max(0, gross - (Q.disc || 0));
+  const vat = Q.vat === "none" ? 0 : IE.round(supply * 0.1, 10);
+  const total = Q.vat === "inc" ? supply + vat : supply;
+  return { t, lines, cost, gross, supply, vat, total };
+}
+
+function render() {
+  $("#q_m2").value = (Q.py * IE.PY).toFixed(1) + "㎡";
+  const c = calc();
+  $("#in_cost").textContent = IE.won(c.cost);
+  $("#in_profit").textContent = IE.won(c.gross - c.cost);
+  $("#in_supply").textContent = IE.won(c.supply);
+  $("#in_rate").textContent = c.supply ? ((c.supply - c.cost) / c.supply * 100).toFixed(1) + "%" : "-";
+  const co = LIC.ok ? LIC.data.n : "업체명 (구독 후 표시)";
+  const vd = new Date(Q.date); vd.setDate(vd.getDate() + (+Q.valid || 0));
+  $("#sheet").innerHTML = `<div class="sheet">
+    ${LIC.ok ? "" : '<div class="wm">체험판 · 견본</div>'}
+    <h1>견 적 서</h1>
+    <div class="hd">
+      <table><tr><th>견적일</th><td>${Q.date}</td></tr><tr><th>고객명</th><td>${IE.esc(Q.client) || "&nbsp;"} 귀하</td></tr><tr><th>연락처</th><td>${IE.esc(Q.phone)}</td></tr><tr><th>현장</th><td>${IE.esc(Q.addr)}</td></tr><tr><th>건물</th><td>${IE.esc(c.t.name)} · ${Q.py}평 (${(Q.py * IE.PY).toFixed(1)}㎡)${Q.period ? " · " + IE.esc(Q.period) : ""}</td></tr></table>
+      <table><tr><th>상호</th><td>${IE.esc(co)}</td></tr><tr><th>대표자</th><td>${IE.esc(S.ceo)}</td></tr><tr><th>사업자</th><td>${IE.esc(S.biz)}</td></tr><tr><th>연락처</th><td>${IE.esc(S.phone)}</td></tr><tr><th>주소</th><td>${IE.esc(S.addr)}</td></tr></table>
+    </div>
+    <div class="sum"><span>합계금액 <b>일금 ${IE.korean(c.total)}원정</b></span><b>${IE.won(c.total)}</b></div>
+    <table><thead><tr><th>No</th><th>공종</th><th>수량</th><th>단가</th><th>금액</th></tr></thead><tbody>
+      ${c.lines.map((l, i) => `<tr><td style="text-align:center">${i + 1}</td><td>${IE.esc(l.name)}${l.desc ? `<br><small style="color:#666">${IE.esc(l.desc)}</small>` : ""}</td><td class="n">${l.qty}${l.ul}</td><td class="n">${l.unit.toLocaleString("ko-KR")}</td><td class="n">${l.amt.toLocaleString("ko-KR")}</td></tr>`).join("") || '<tr><td colspan="5" style="text-align:center;color:#888">공사 항목을 선택해 주세요</td></tr>'}
+      <tr><th colspan="4" style="text-align:right">소계</th><td class="n">${c.gross.toLocaleString("ko-KR")}</td></tr>
+      ${Q.disc ? `<tr><th colspan="4" style="text-align:right">할인</th><td class="n">-${(+Q.disc).toLocaleString("ko-KR")}</td></tr>` : ""}
+      <tr><th colspan="4" style="text-align:right">공급가액</th><td class="n">${c.supply.toLocaleString("ko-KR")}</td></tr>
+      ${Q.vat !== "none" ? `<tr><th colspan="4" style="text-align:right">부가세(10%)${Q.vat === "sep" ? " 별도" : ""}</th><td class="n">${c.vat.toLocaleString("ko-KR")}</td></tr>` : ""}
+      <tr><th colspan="4" style="text-align:right">합계${Q.vat === "sep" ? " (부가세 별도)" : ""}</th><td class="n"><b>${c.total.toLocaleString("ko-KR")}</b></td></tr>
+    </tbody></table>
+    <div class="foot">${IE.esc(S.terms)}${Q.memo ? "\n\n[비고] " + IE.esc(Q.memo) : ""}\n\n견적 유효기간: ${vd.toISOString().slice(0, 10)}까지${S.bank ? "\n입금 계좌: " + IE.esc(S.bank) : ""}</div>
+  </div>`;
+  IE.save("ie_draft", Q);
+}
+
+/* 저장·출력 */
+$("#saveQ").onclick = () => {
+  if (!LIC.ok) return toast("저장은 구독 후 이용할 수 있습니다.");
+  const list = IE.load("ie_quotes", []); const c = calc();
+  const i = list.findIndex(x => x.id === Q.id); const rec = Object.assign(IE.clone(Q), { total: c.total, typeName: c.t.name });
+  i >= 0 ? list[i] = rec : list.unshift(rec); IE.save("ie_quotes", list); toast("저장했습니다.");
+};
+$("#printQ").onclick = () => { const old = document.title; document.title = "견적서_" + (Q.client || "고객") + "_" + Q.date; window.print(); document.title = old; };
+$("#newQ").onclick = () => { if (confirm("새 견적을 시작할까요? 저장하지 않은 내용은 사라집니다.")) { Q = newQuote(); Q.margin = S.lastMargin ?? 15; drawForm(); render(); } };
+
+function drawList() {
+  const list = IE.load("ie_quotes", []);
+  $("#listBox").innerHTML = list.length ? list.map(x => `<div class="item"><span class="nm">${IE.esc(x.client || "이름 없음")} · ${IE.esc(x.typeName)} ${x.py}평<small>${x.date} · ${IE.won(x.total)}</small></span><button class="btn sm" data-open="${x.id}">열기</button><button class="btn red sm" data-rm="${x.id}">삭제</button></div>`).join("") : '<p class="note">아직 저장된 견적이 없습니다.</p>';
+}
+$("#listBox").addEventListener("click", e => {
+  const list = IE.load("ie_quotes", []);
+  if (e.target.dataset.open) { Q = IE.clone(list.find(x => x.id == e.target.dataset.open)); drawForm(); render(); go("quote"); }
+  if (e.target.dataset.rm && confirm("이 견적을 삭제할까요?")) { IE.save("ie_quotes", list.filter(x => x.id != e.target.dataset.rm)); drawList(); }
+});
+$("#backup").onclick = () => {
+  const blob = new Blob([JSON.stringify({ settings: S, quotes: IE.load("ie_quotes", []) }, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "견적앱_백업_" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
+};
+$("#restore").onchange = async e => {
+  try { const d = JSON.parse(await e.target.files[0].text()); if (d.settings) { S = Object.assign(IE.clone(DEF_SETTINGS), d.settings); IE.save("ie_settings", S); } if (d.quotes) IE.save("ie_quotes", d.quotes); drawSettings(); drawForm(); render(); drawList(); toast("백업을 불러왔습니다."); }
+  catch { toast("백업 파일을 읽지 못했습니다."); }
+};
+
+/* 단가 설정 */
+function drawSettings() {
+  ["ceo", "phone", "biz", "bank", "addr", "terms"].forEach(k => $("#s_" + k).value = S[k] || "");
+  $("#rateRows").innerHTML = S.items.map((i, n) => `<tr><td>${IE.esc(i.name)}</td><td style="text-align:center">${IE.unitLabel(i)}</td><td><input type="number" data-n="${n}" data-f="price" value="${i.price}"></td><td style="text-align:center"><input type="checkbox" data-n="${n}" data-f="def" ${i.def ? "checked" : ""} style="width:20px;height:20px"></td></tr>`).join("");
+  $("#typeRows").innerHTML = S.types.map((t, n) => `<tr><td>${IE.esc(t.name)}</td><td><input type="number" step="0.01" data-tn="${n}" value="${t.k}"></td></tr>`).join("");
+}
+$("#saveRates").onclick = () => {
+  ["ceo", "phone", "biz", "bank", "addr", "terms"].forEach(k => S[k] = $("#s_" + k).value);
+  $$("#rateRows input").forEach(x => { const it = S.items[x.dataset.n]; if (x.dataset.f === "price") it.price = +x.value || 0; else it.def = x.checked; });
+  $$("#typeRows input").forEach(x => S.types[x.dataset.tn].k = +x.value || 1);
+  IE.save("ie_settings", S); drawForm(); render(); toast("설정을 저장했습니다.");
+};
+$("#resetRates").onclick = () => { if (confirm("단가와 계수를 예시값으로 되돌릴까요? 업체 정보는 유지됩니다.")) { S.items = IE.clone(IE.DEFAULT_ITEMS); S.types = IE.clone(IE.DEFAULT_TYPES); IE.save("ie_settings", S); drawSettings(); drawForm(); render(); } };
+
+/* 고객용 링크 */
+let linkUrl = "";
+$("#makeLink").onclick = () => {
+  if (!LIC.ok) return toast("고객용 링크는 구독 후 만들 수 있습니다.");
+  if (!S.phone) { toast("단가 설정에서 연락처를 먼저 입력해 주세요."); return go("rates"); }
+  const m = 1 + (+$("#l_margin").value || 0) / 100;
+  const cfg = { v: 1, co: { n: LIC.data.n, p: S.phone, c: S.ceo }, r: +$("#l_range").value || 10,
+    t: S.types.map(t => [t.id, t.name, t.k]),
+    i: S.items.map(i => [i.id, i.name, i.unit, IE.round(i.price * m, 100), i.per || "", i.def ? 1 : 0]),
+    l: localStorage.getItem("ie_license") };
+  linkUrl = new URL("customer.html", location.href).href + "#c=" + IE.encodeObj(cfg);
+  $("#l_url").value = linkUrl; $("#openLink").href = linkUrl; $("#linkOut").classList.remove("hide");
+};
+$("#copyLink").onclick = async () => { try { await navigator.clipboard.writeText(linkUrl); toast("복사했습니다."); } catch { $("#l_url").select(); document.execCommand("copy"); toast("복사했습니다."); } };
+$("#shareLink").onclick = () => navigator.share ? navigator.share({ title: (LIC.data?.n || "") + " 간편 견적", url: linkUrl }).catch(() => {}) : $("#copyLink").click();
+
+/* 시작 */
+const draft = IE.load("ie_draft", null); if (draft) Q = Object.assign(newQuote(), draft);
+drawSettings(); drawForm(); render(); checkLicense();
+</script>
+</body>
+</html>

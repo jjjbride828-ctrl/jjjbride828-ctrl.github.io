@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>운영자 구독코드 발급</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top"><div><b>운영자 구독코드 발급</b><br><small>진주님 전용 화면</small></div><span class="badge" id="keyBadge">발급키 없음</span></div>
+<div class="wrap">
+  <div class="card" id="keyCard">
+    <h2>발급키 등록 (처음 한 번)</h2>
+    <p class="note" style="margin:0 0 8px">따로 받아 두신 발급키를 붙여넣으면 이 휴대폰에만 저장됩니다. 발급키가 있어야 코드를 만들 수 있고, 발급키가 없는 사람은 이 화면을 열어도 코드를 만들 수 없습니다.</p>
+    <input id="keyIn" placeholder="발급키 붙여넣기">
+    <div class="btns"><button class="btn" id="keySave">등록</button><button class="btn red sm" id="keyDel">이 기기에서 발급키 지우기</button></div>
+  </div>
+
+  <div class="card">
+    <h2>구독코드 만들기</h2>
+    <label>업체명 (견적서 상호로 표시됨)</label><input id="name" placeholder="예: OO인테리어">
+    <div class="row">
+      <div><label>시작일</label><input id="start" type="date"></div>
+      <div><label>기간</label><select id="months"><option value="1">1개월</option><option value="3">3개월</option><option value="6">6개월</option><option value="12">12개월</option></select></div>
+    </div>
+    <label>메모 (입금자명, 연락처 등 · 기록용)</label><input id="memo">
+    <p class="note" id="endInfo"></p>
+    <div class="btns"><button class="btn gold" id="make">코드 발급</button></div>
+    <div id="out" class="hide">
+      <label>구독코드</label><textarea id="code" rows="4" readonly></textarea>
+      <label>보낼 안내 메시지</label><textarea id="msg" rows="8" readonly></textarea>
+      <div class="btns"><button class="btn" id="copyMsg">안내 메시지 복사</button><button class="btn line" id="copyCode">코드만 복사</button></div>
+    </div>
+  </div>
+
+  <div class="card"><h2>발급 기록</h2><div id="hist"></div><p class="note">발급 기록은 이 휴대폰에만 저장됩니다.</p></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="common.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2000); };
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+$("#start").value = today();
+
+function endDate() {
+  const s = new Date($("#start").value + "T00:00:00"); const m = +$("#months").value;
+  const e = new Date(s); e.setMonth(e.getMonth() + m); e.setDate(e.getDate() - 1);
+  e.setMinutes(e.getMinutes() - e.getTimezoneOffset()); return e.toISOString().slice(0, 10);
+}
+function info() { $("#endInfo").textContent = $("#start").value ? "이용 기간: " + $("#start").value + " ~ " + endDate() : ""; }
+$("#start").oninput = $("#months").oninput = info; info();
+
+async function getKey() {
+  const d = localStorage.getItem("ie_issue_key"); if (!d) return null;
+  try { return await crypto.subtle.importKey("jwk", Object.assign({}, IE.PUBKEY, { d }), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]); } catch { return null; }
+}
+async function keyState() {
+  const k = await getKey(); const b = $("#keyBadge");
+  b.className = "badge " + (k ? "ok" : "warn"); b.textContent = k ? "발급키 등록됨" : "발급키 없음";
+}
+$("#keySave").onclick = async () => {
+  const d = $("#keyIn").value.trim(); if (!d) return;
+  localStorage.setItem("ie_issue_key", d);
+  const k = await getKey();
+  // 등록한 키가 공개키와 짝이 맞는지 시험 서명으로 확인
+  let ok = false;
+  if (k) { const p = IE.encodeObj({ n: "test", e: "2099-12-31", i: "t" }); const s = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, k, new TextEncoder().encode(p))); ok = (await IE.verifyLicense(p + "." + IE.b64u(s))).ok; }
+  if (!ok) { localStorage.removeItem("ie_issue_key"); toast("발급키가 맞지 않습니다."); } else { $("#keyIn").value = ""; toast("발급키를 등록했습니다."); }
+  keyState();
+};
+$("#keyDel").onclick = () => { if (confirm("이 기기에서 발급키를 지울까요?")) { localStorage.removeItem("ie_issue_key"); keyState(); } };
+
+$("#make").onclick = async () => {
+  const k = await getKey(); if (!k) return toast("먼저 발급키를 등록해 주세요.");
+  const n = $("#name").value.trim(); if (!n) return toast("업체명을 입력해 주세요.");
+  const e = endDate(); const i = Date.now().toString(36);
+  const p = IE.encodeObj({ n, e, i });
+  const sig = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, k, new TextEncoder().encode(p)));
+  const code = p + "." + IE.b64u(sig);
+  const url = new URL("owner.html", location.href).href;
+  $("#code").value = code;
+  $("#msg").value = `${n} 대표님, 인테리어 견적 앱 구독코드를 보내드립니다.\n\n이용 기간: ${$("#start").value} ~ ${e}\n\n1. 아래 주소를 휴대폰에서 열어 주세요.\n${url}\n2. 맨 위 '구독' 탭을 누릅니다.\n3. 아래 구독코드를 붙여넣고 '등록'을 누릅니다.\n\n구독코드\n${code}\n\n감사합니다.`;
+  $("#out").classList.remove("hide");
+  const h = IE.load("ie_issue_hist", []); h.unshift({ n, s: $("#start").value, e, memo: $("#memo").value, at: today() }); IE.save("ie_issue_hist", h); hist();
+};
+const copy = async v => { try { await navigator.clipboard.writeText(v); } catch { const t = document.createElement("textarea"); t.value = v; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); } toast("복사했습니다."); };
+$("#copyMsg").onclick = () => copy($("#msg").value);
+$("#copyCode").onclick = () => copy($("#code").value);
+function hist() {
+  const h = IE.load("ie_issue_hist", []); const now = today();
+  $("#hist").innerHTML = h.length ? h.map(x => `<div class="kv"><span>${IE.esc(x.n)}<br><small style="color:var(--sub)">${IE.esc(x.memo || "")}</small></span><span style="text-align:right">${x.s} ~ ${x.e}<br><small style="color:${x.e < now ? "var(--err)" : "var(--ok)"}">${x.e < now ? "만료" : "이용 중"}</small></span></div>`).join("") : '<p class="note">아직 발급 기록이 없습니다.</p>';
+}
+keyState(); hist();
+</script>
+</body>
+</html>
